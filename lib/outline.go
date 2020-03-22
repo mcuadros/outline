@@ -4,6 +4,7 @@ package lib
 import (
 	"bytes"
 	"fmt"
+	"io/ioutil"
 	"sort"
 	"strings"
 )
@@ -128,6 +129,7 @@ type Function struct {
 	Description string
 	Params      []*Param
 	Return      string
+	Examples    []*Example
 }
 
 // Param is an argument to a function
@@ -157,6 +159,7 @@ type Type struct {
 	Methods     Functions
 	Fields      []*Field
 	Operators   []*Operator
+	Examples    []*Example
 }
 
 // Sort sorts a Type pointer's Methods
@@ -175,4 +178,15 @@ type Field struct {
 type Operator struct {
 	Opr         string
 	Description string
+}
+
+type Example struct {
+	Name        string
+	Filename    string
+	Description string
+}
+
+func (e *Example) Code() (string, error) {
+	code, err := ioutil.ReadFile(e.Filename)
+	return string(code), err
 }

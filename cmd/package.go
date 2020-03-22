@@ -30,6 +30,13 @@ var PackageCmd = &cobra.Command{
 			fmt.Println(err)
 			os.Exit(1)
 		}
+
+		ctx, err := cmd.Flags().GetString("context-dir")
+		if err != nil {
+			fmt.Println(err)
+			os.Exit(1)
+		}
+
 		if str != "" {
 			b, err := ioutil.ReadFile(str)
 			if err != nil {
@@ -81,12 +88,15 @@ var PackageCmd = &cobra.Command{
 
 		var list lib.Docs
 		for _, doc := range docs {
-			doc.Types.ResolveImplements()
 			list = append(list, doc)
 		}
 
 		if !noSort {
 			list.Sort()
+		}
+
+		if ctx != "" {
+			os.Chdir(ctx)
 		}
 
 		if err := t.Execute(os.Stdout, list); err != nil {
@@ -112,4 +122,5 @@ func merge(a, b *lib.Doc) {
 func init() {
 	PackageCmd.Flags().StringP("template", "t", "", "template file to load. overrides preset")
 	PackageCmd.Flags().Bool("no-sort", false, "don't alpha-sort fields & outline documents")
+	PackageCmd.Flags().StringP("context-dir", "d", "", "context dir")
 }

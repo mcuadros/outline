@@ -186,6 +186,10 @@ func (p *parser) readFunction(receiver string, baseIndent int) (fn *Function, er
 			if fn.Params, err = p.readParams(p.indent); err != nil {
 				return
 			}
+		case ExamplesTok:
+			if fn.Examples, err = p.readExamples(p.indent); err != nil {
+				return
+			}
 		case ReturnTok:
 			if fn.Return, err = p.readMultilineText(p.indent); err != nil {
 				return
@@ -200,6 +204,37 @@ func (p *parser) readFunction(receiver string, baseIndent int) (fn *Function, er
 			return
 		}
 	}
+}
+
+func (p *parser) readExamples(baseIndent int) (examples []*Example, err error) {
+	for {
+		var example *Example
+		if example, err = p.readExample(baseIndent + 1); err != nil || example == nil {
+			return
+		}
+		examples = append(examples, example)
+	}
+}
+
+func (p *parser) readExample(baseIndent int) (example *Example, err error) {
+	tok := p.scan()
+	if p.indent < baseIndent || tok.Type != TextTok {
+		p.unscan()
+		return
+	}
+	// TODO (b5): hack. acutally parse this stuff using the lexer
+	spl := strings.SplitN(tok.Text, " ", 2)
+	if len(spl) > 1 {
+		example = &Example{
+			Filename: spl[0],
+			Name:     spl[1],
+		}
+	} else {
+		example = &Example{Filename: tok.Text}
+	}
+
+	example.Description, err = p.readMultilineText(baseIndent + 1)
+	return
 }
 
 func (p *parser) readParams(baseIndent int) (params []*Param, err error) {
@@ -271,6 +306,10 @@ func (p *parser) readType(baseIndent int) (t *Type, err error) {
 			}
 		case OperatorsTok:
 			if t.Operators, err = p.readOperators(p.indent); err != nil {
+				return
+			}
+		case ExamplesTok:
+			if t.Examples, err = p.readExamples(p.indent); err != nil {
 				return
 			}
 		case TextTok:

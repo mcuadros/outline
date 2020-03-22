@@ -58,6 +58,9 @@ const (
 	OperatorsTok
 	// KeywordEnd marks the end of keyword tokens in the token enumeration
 	KeywordEnd
+
+	// ExamplesTok is the "examples:" token
+	ExamplesTok
 )
 
 func (t TokenType) String() string {
@@ -86,6 +89,8 @@ func (t TokenType) String() string {
 		return "params"
 	case ReturnTok:
 		return "return"
+	case ExamplesTok:
+		return "examples"
 	default:
 		return "unknown"
 	}

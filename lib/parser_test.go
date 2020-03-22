@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/sergi/go-diff/diffmatchpatch"
+	"github.com/stretchr/testify/assert"
 )
 
 var differ = diffmatchpatch.New()
@@ -196,4 +197,60 @@ func TestParse(t *testing.T) {
 			t.Log(differ.DiffPrettyText(diffs))
 		}
 	}
+}
+
+const funcExamples = `outline: examples
+  huh is a package that has no meaning or purpose
+  functions:
+    foo(bar string) int
+      foo a bar, which is to to a bar and remove 'd' from 'food'
+      examples:
+        foo.star Foo Example
+        bar.star 
+          Description of the bar example
+      params:
+        bar string
+          the name of a bar`
+
+func TestFunctionExamples(t *testing.T) {
+	b := bytes.NewBufferString(funcExamples)
+	doc, err := ParseFirst(b)
+	assert.NoError(t, err)
+
+	assert.Equal(t, doc.Functions.Len(), 1)
+
+	foo := doc.Functions[0]
+	assert.Len(t, foo.Examples, 2)
+	assert.Equal(t, foo.Examples[0].Name, "Foo Example")
+	assert.Equal(t, foo.Examples[0].Filename, "foo.star")
+	assert.Equal(t, foo.Examples[0].Description, "")
+
+	assert.Equal(t, foo.Examples[1].Name, "")
+	assert.Equal(t, foo.Examples[1].Filename, "bar.star")
+	assert.Equal(t, foo.Examples[1].Description, "Description of the bar example")
+}
+
+const typeExamples = `outline: examples
+types:
+  duration
+    a period of time
+    examples:
+      foo.star Foo Example
+    methods:
+      add(d duration) int
+        params:
+          d duration`
+
+func TestTypeExamples(t *testing.T) {
+	b := bytes.NewBufferString(typeExamples)
+	doc, err := ParseFirst(b)
+	assert.NoError(t, err)
+
+	assert.Equal(t, doc.Types.Len(), 1)
+
+	foo := doc.Types[0]
+	assert.Len(t, foo.Examples, 1)
+	assert.Equal(t, foo.Examples[0].Name, "Foo Example")
+	assert.Equal(t, foo.Examples[0].Filename, "foo.star")
+	assert.Equal(t, foo.Examples[0].Description, "")
 }

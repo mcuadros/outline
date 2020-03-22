@@ -74,6 +74,8 @@ func (s *scanner) Scan() Token {
 				return s.newTok(OperatorsTok)
 			case "params":
 				return s.newTok(ParamsTok)
+			case "examples":
+				return s.newTok(ExamplesTok)
 			case "return":
 				return s.newTok(ReturnTok)
 			default:

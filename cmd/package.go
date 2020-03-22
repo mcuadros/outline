@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io/ioutil"
 	"os"
 	"strings"
 	"text/template"
@@ -18,7 +19,11 @@ var PackageCmd = &cobra.Command{
 	Short:   "exctract and execute outline documents from a go package against a template",
 	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
-		t := template.Must(template.New("mdIndex").Parse(mdIndex))
+		funcMap := template.FuncMap{
+			"split": strings.Split,
+		}
+
+		t := template.Must(template.New("mdIndex").Funcs(funcMap).Parse(mdIndex))
 
 		str, err := cmd.Flags().GetString("template")
 		if err != nil {
@@ -26,7 +31,13 @@ var PackageCmd = &cobra.Command{
 			os.Exit(1)
 		}
 		if str != "" {
-			t, err = template.ParseFiles(str)
+			b, err := ioutil.ReadFile(str)
+			if err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
+
+			t, err = template.New("mdIndex").Funcs(funcMap).Parse(string(b))
 			if err != nil {
 				fmt.Println(err)
 				os.Exit(1)
@@ -70,6 +81,7 @@ var PackageCmd = &cobra.Command{
 
 		var list lib.Docs
 		for _, doc := range docs {
+			doc.Types.ResolveImplements()
 			list = append(list, doc)
 		}
 

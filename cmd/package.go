@@ -6,8 +6,11 @@ import (
 	"os"
 	"strings"
 	"text/template"
+	"unicode"
+	"unicode/utf8"
 
 	"github.com/b5/outline/lib"
+	bp "github.com/gohugoio/hugo/bufferpool"
 	"github.com/spf13/cobra"
 	parseutil "gopkg.in/src-d/go-parse-utils.v1"
 )
@@ -20,7 +23,8 @@ var PackageCmd = &cobra.Command{
 	Long:    ``,
 	Run: func(cmd *cobra.Command, args []string) {
 		funcMap := template.FuncMap{
-			"split": strings.Split,
+			"split":          strings.Split,
+			"sanitizeAnchor": sanitizeAnchor,
 		}
 
 		t := template.Must(template.New("mdIndex").Funcs(funcMap).Parse(mdIndex))
@@ -123,4 +127,33 @@ func init() {
 	PackageCmd.Flags().StringP("template", "t", "", "template file to load. overrides preset")
 	PackageCmd.Flags().Bool("no-sort", false, "don't alpha-sort fields & outline documents")
 	PackageCmd.Flags().StringP("context-dir", "d", "", "context dir")
+}
+
+func sanitizeAnchor(input string) string {
+	b := []byte(input)
+	buf := bp.GetBuffer()
+
+	for len(b) > 0 {
+		r, size := utf8.DecodeRune(b)
+		switch {
+		case r == '-' || r == ' ':
+			buf.WriteRune('-')
+		case isAlphaNumeric(r):
+			buf.WriteRune(unicode.ToLower(r))
+		default:
+		}
+
+		b = b[size:]
+	}
+
+	result := make([]byte, buf.Len())
+	copy(result, buf.Bytes())
+
+	bp.PutBuffer(buf)
+
+	return string(result)
+}
+
+func isAlphaNumeric(r rune) bool {
+	return r == '_' || unicode.IsLetter(r) || unicode.IsDigit(r)
 }

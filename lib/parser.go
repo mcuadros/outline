@@ -55,7 +55,7 @@ type parser struct {
 	indent int // indentation level of current line
 }
 
-func (p *parser) scan() (tok Token) {
+func (p *parser) scan(nw bool) (tok Token) {
 	if p.buf.n > 0 {
 		tok = p.buf.tok
 		p.indent = p.buf.indent
@@ -76,6 +76,9 @@ func (p *parser) scan() (tok Token) {
 		case NewlineTok:
 			p.indent = 0
 			p.line++
+			if nw {
+				return
+			}
 		case IndentTok:
 			p.indent++
 		case eofTok:
@@ -92,7 +95,7 @@ func (p *parser) unscan() {
 
 func (p *parser) read() (doc *Doc, err error) {
 	for {
-		tok := p.scan()
+		tok := p.scan(false)
 		switch tok.Type {
 		case DocumentTok:
 			doc, err = p.readDocument(p.indent)
@@ -105,7 +108,7 @@ func (p *parser) read() (doc *Doc, err error) {
 
 func (p *parser) readDocument(baseIndent int) (doc *Doc, err error) {
 	doc = &Doc{}
-	tok := p.scan()
+	tok := p.scan(false)
 	if tok.Type == TextTok {
 		doc.Name = tok.Text
 	} else {
@@ -113,7 +116,7 @@ func (p *parser) readDocument(baseIndent int) (doc *Doc, err error) {
 	}
 
 	for {
-		tok := p.scan()
+		tok := p.scan(false)
 		if p.indent < baseIndent {
 			p.unscan()
 			return
@@ -167,7 +170,7 @@ func (p *parser) readFunctions(receiver string, baseIndent int) (funcs []*Functi
 
 func (p *parser) readFunction(receiver string, baseIndent int) (fn *Function, err error) {
 	// read signature
-	tok := p.scan()
+	tok := p.scan(false)
 	if p.indent < baseIndent || tok.Type != TextTok {
 		p.unscan()
 		return
@@ -175,7 +178,7 @@ func (p *parser) readFunction(receiver string, baseIndent int) (fn *Function, er
 
 	fn = &Function{Receiver: receiver, Signature: tok.Text}
 	for {
-		tok := p.scan()
+		tok := p.scan(false)
 		if p.indent <= baseIndent {
 			p.unscan()
 			return
@@ -217,7 +220,7 @@ func (p *parser) readExamples(baseIndent int) (examples []*Example, err error) {
 }
 
 func (p *parser) readExample(baseIndent int) (example *Example, err error) {
-	tok := p.scan()
+	tok := p.scan(false)
 	if p.indent < baseIndent || tok.Type != TextTok {
 		p.unscan()
 		return
@@ -248,7 +251,7 @@ func (p *parser) readParams(baseIndent int) (params []*Param, err error) {
 }
 
 func (p *parser) readParam(baseIndent int) (param *Param, err error) {
-	tok := p.scan()
+	tok := p.scan(false)
 	if p.indent < baseIndent || tok.Type != TextTok {
 		p.unscan()
 		return
@@ -280,7 +283,7 @@ func (p *parser) readTypes(baseIndent int) (types []*Type, err error) {
 
 func (p *parser) readType(baseIndent int) (t *Type, err error) {
 	// read signature
-	tok := p.scan()
+	tok := p.scan(false)
 	if p.indent < baseIndent || tok.Type != TextTok {
 		p.unscan()
 		return
@@ -289,7 +292,7 @@ func (p *parser) readType(baseIndent int) (t *Type, err error) {
 	t = &Type{Name: tok.Text}
 
 	for {
-		tok = p.scan()
+		tok = p.scan(false)
 		if p.indent <= baseIndent {
 			p.unscan()
 			return
@@ -335,7 +338,7 @@ func (p *parser) readFields(baseIndent int) (fields []*Field, err error) {
 }
 
 func (p *parser) readField(baseIndent int) (field *Field, err error) {
-	tok := p.scan()
+	tok := p.scan(false)
 	if p.indent < baseIndent || tok.Type != TextTok {
 		p.unscan()
 		return
@@ -366,7 +369,7 @@ func (p *parser) readOperators(baseIndent int) (ops []*Operator, err error) {
 }
 
 func (p *parser) readOperator(baseIndent int) (op *Operator, err error) {
-	tok := p.scan()
+	tok := p.scan(false)
 	if p.indent < baseIndent || tok.Type != TextTok {
 		p.unscan()
 		return
@@ -376,9 +379,19 @@ func (p *parser) readOperator(baseIndent int) (op *Operator, err error) {
 }
 
 func (p *parser) readMultilineText(baseIndent int) (str string, err error) {
+	defer func() {
+		str = strings.TrimSpace(str)
+	}()
+
 	for {
-		tok := p.scan()
+		tok := p.scan(true)
 		// fmt.Printf("readMultilineText base: %d indent: %d %s %#v\n", baseIndent, p.indent, tok.Type, tok.Text)
+		if tok.Type == NewlineTok {
+			str = strings.Trim(str, " ")
+			str += "\n"
+			continue
+		}
+
 		if p.indent < baseIndent || tok.Type != TextTok {
 			p.unscan()
 			return
@@ -387,9 +400,10 @@ func (p *parser) readMultilineText(baseIndent int) (str string, err error) {
 		if str == "" {
 			str = tok.Text
 		} else {
-			str += " " + tok.Text
+			str += tok.Text + " "
 		}
 	}
+
 }
 
 func (p *parser) errorf(format string, args ...interface{}) error {

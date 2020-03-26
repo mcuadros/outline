@@ -254,3 +254,28 @@ func TestTypeExamples(t *testing.T) {
 	assert.Equal(t, foo.Examples[0].Filename, "foo.star")
 	assert.Equal(t, foo.Examples[0].Description, "")
 }
+
+const typeDescriptionMultiLine = `outline: examples
+types:
+  duration
+    line 1.
+    line 2.
+
+    line 3.
+    examples:
+      foo.star Foo Example`
+
+func TestDescriptionMultiLine(t *testing.T) {
+	b := bytes.NewBufferString(typeDescriptionMultiLine)
+	doc, err := ParseFirst(b)
+	assert.NoError(t, err)
+
+	assert.Equal(t, doc.Types.Len(), 1)
+
+	foo := doc.Types[0]
+	assert.Equal(t, foo.Description, "line 1.\nline 2.\n\nline 3.")
+	assert.Len(t, foo.Examples, 1)
+	assert.Equal(t, foo.Examples[0].Name, "Foo Example")
+	assert.Equal(t, foo.Examples[0].Filename, "foo.star")
+	assert.Equal(t, foo.Examples[0].Description, "")
+}

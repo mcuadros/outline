@@ -137,7 +137,7 @@ func (p *parser) readDocument(baseIndent int) (doc *Doc, err error) {
 				return
 			}
 		case FunctionsTok:
-			if doc.Functions, err = p.readFunctions(doc.Name, p.indent); err != nil {
+			if doc.Functions, err = p.readFunctions("", p.indent); err != nil {
 				return
 			}
 		case TypesTok:

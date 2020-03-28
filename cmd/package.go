@@ -24,6 +24,8 @@ var PackageCmd = &cobra.Command{
 	Run: func(cmd *cobra.Command, args []string) {
 		funcMap := template.FuncMap{
 			"split":          strings.Split,
+			"trim":           strings.TrimSpace,
+			"replace_all":    strings.ReplaceAll,
 			"sanitizeAnchor": sanitizeAnchor,
 		}
 

@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/b5/outline/cmd"
+	"github.com/mcuadros/outline/cmd"
 )
 
 func main() {

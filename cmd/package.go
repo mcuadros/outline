@@ -9,8 +9,8 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/b5/outline/lib"
 	bp "github.com/gohugoio/hugo/bufferpool"
+	"github.com/mcuadros/outline/lib"
 	"github.com/spf13/cobra"
 	parseutil "gopkg.in/src-d/go-parse-utils.v1"
 )

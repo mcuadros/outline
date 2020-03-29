@@ -1,4 +1,4 @@
-module github.com/b5/outline
+module github.com/mcuadros/outline
 
 go 1.12
 

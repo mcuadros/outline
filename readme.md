@@ -9,7 +9,7 @@ use-at-your-own-risk alpha. I'm working on this with Qri's [rfc](https://github.
 
 ### Example
 ```shell
-go install github.com/b5/outline
+go install github.com/mcuadros/outline
 ```
 
 make a file: `outline.txt`:

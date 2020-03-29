@@ -6,7 +6,7 @@ import (
 	"strings"
 	"text/template"
 
-	"github.com/b5/outline/lib"
+	"github.com/mcuadros/outline/lib"
 	"github.com/spf13/cobra"
 )
 
